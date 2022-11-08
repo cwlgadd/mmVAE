@@ -10,7 +10,6 @@ from torch.utils.data.dataloader import DataLoader
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 import matplotlib.pyplot as plt
 
-from helpers import summarise_binary_profiles, post_process, sim_mat
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
 from .Layers import L0Dense, LinearPositive

@@ -5,10 +5,6 @@ import seaborn as sns
 import pandas as pd
 
 
-def get_disease_order():
-    print("Deprecation warning: replace with helpers.get_column_order")
-    return get_column_order()
-
 def get_column_order(plot=False):
     """
     Return the order in which we want to plot the multi-morbidity diseases in the ML4H paper
@@ -34,21 +30,6 @@ def get_column_order(plot=False):
                  "Slesystemic", "Ulcer peptic",  "Ehler",  "Chronic Liver", "Chronic Kidney", "Inflam Arth",
                  "Atrial fibrillation", "Haemophilia","IIH", "Multiple sclerosis", "Somatoform", "OSA","Deaf", 
                  "Cataract",]
-    
-                 # Acronymns:
-                 # SMHmm: 
-                 # PCOS: Polycystic ovarian syndrome
-                 # PTH: 
-                 # IHD: Ischemic heart disease
-                 # COPD: Chronic obstructive pulmonary disease
-                 # IBS: Irritable bowel syndrome
-                 # HIV: Human immunodeficiency virus
-                 # IIH: Idiopathic intracranial hypertension 
-                 # OSA: Obstructive sleep apnoea
-                 # VTE: Venous thromboembolism
-                 # MI: myocardial infarction
-                
-                
     else:
         return ["CancerAll", "asthmalonglist2018", "female_infertility",
                 "AllergicRhinConj",
@@ -74,8 +55,8 @@ def get_column_order(plot=False):
 def filter_frame(data_frame, date_frame=None, verbose=0,
                  diseases=["asthmalonglist2018","hypertension","female_infertility"], sizes=None, remove_duplicates=False):
     """
-    Reduce data (and optionally date frame) to one in which we know there is some expected structure.
-     - 3 clusters (eczema, and overlapped clusters of anxiety and depression)
+    Reduce data (and optionally date frame) to one in which we know there is some expected structure. 
+        Used in ML4H case study.
     """
     
     # Pre-defined filters
@@ -122,7 +103,8 @@ def filter_frame(data_frame, date_frame=None, verbose=0,
     
 def summarise_binary_profiles(binary_profiles, sort='counts', verbose=0):
     """
-    Summarise the binaries profiles obtained by taking the vertices of the hyper-cube. Index clusters according to desired scheme (for visualisation)
+    Summarise the binary profiles obtained by mapping to the corners of the latent hyper-cube. 
+        Index clusters according to desired `sort' scheme (for visualisation)
     """
 
     unique_profiles, cluster_allocations, counts = np.unique(binary_profiles, axis=0, return_inverse=True, return_counts=True)
@@ -137,16 +119,14 @@ def summarise_binary_profiles(binary_profiles, sort='counts', verbose=0):
     cluster_allocations2 = np.zeros_like(cluster_allocations)
     for i, e in enumerate(reorder_inds):
         cluster_allocations2[cluster_allocations == e] = i
-        
-    if verbose > 0:
-        pass
     
     return counts[reorder_inds], unique_profiles[reorder_inds, :], cluster_allocations2
 
 
-def sim_mat(allocations):
+def similarity_matrix(allocations):
     """
     Calculate similarity matrix between seeds/ensembles
+        note: For use in external R hierarchical clustering code.
     """
     num_samples = allocations.shape[0]
     num_draws = allocations.shape[1]
@@ -163,9 +143,64 @@ def sim_mat(allocations):
     return similarity_matrix
 
 
-def post_process(Y, output_dictionary, Y_test=None, ensemble_allocations=False, truncate_or = 5, eps=1e-6, cutoff=1000):
+def process_clusters(Y, allocation, profiles, counts, _cutoff=1000):
+    """
+    """
+    assert len(counts) == profiles.shape[0]
+    assert sum(counts) == Y.shape[0]
+    _eps = 1e-12
+
+    # Memory allocation, filtering out rare clusters for plotting
+    n_over = sum(counts > _cutoff)
+    prevalence = np.zeros((n_over, Y.shape[1]))
+    OR = np.zeros((n_over, Y.shape[1]))
+    CFA = np.zeros((n_over, profiles.shape[1]))                                                                                        # Cluster factor association matrix: The latent factors turned on in each cluster
+    y_labels, counts_over = [], []
+
+    for idx, cluster in enumerate([i for i in range(len(counts)) if counts[i] > _cutoff]):                                           # For each cluster above cut-off size
+        prevalence[idx, :] = np.sum(Y[allocation == cluster + 1, :], axis=0)                                                             # Prevalence: The number of times the condition appears in the cluster
+        OR[idx, :] = (_eps + np.mean(Y[allocation == cluster + 1, :], axis=0)) / (_eps + np.mean(Y[allocation != cluster + 1, :], axis=0))              # Odds ratio:             
+        CFA[idx, :] = profiles[cluster, :]                                                                                          # unique profiles above cut-off size            
+        y_labels.append(f'{cluster + 1}') # (N={counts[cluster]})') #, topics {np.where(unique_profiles[cluster, :]!=0)[0] + 1}')                # Save plotting label for when we report the above metrics
+        counts_over.append(counts[cluster])
+
+    return prevalence, OR, CFA, counts_over, y_labels
+
+
+def process_factors(Y, z_binary):
+        """
+        """
+        assert Y.shape[0] == z_binary.shape[0]
+        _eps = 1e-12                                               # For numerical stability if a factor is empty or has no conditions associated
+
+        N = Y.shape[0]
+        D = Y.shape[1]
+        L = z_binary.shape[1]
+        
+        # Memory allocation, filtering out rare clusters for plotting
+        prevalence = np.zeros((L, D))
+        OR = np.zeros((L, D))
+        y_labels, counts = [], []
+        
+        for factor in range(L):                                                                                         
+            have_factor = np.where(np.array(z_binary[:, factor]) == 1)[0]
+            no_factor = np.where(np.array(z_binary[:, factor]) != 1)[0]
+            assert len(have_factor) + len(no_factor) == Y.shape[0]
+            
+            prevalence[factor, :] = np.sum(Y[have_factor, :], axis=0)                                                             # Prevalence: The number of times the condition appears in the cluster74
+            OR[factor, :] = (_eps + np.mean(Y[have_factor, :], axis=0)) / (_eps + np.mean(Y[no_factor, :], axis=0))
+            y_labels.append(f'{factor + 1}')                                                                                             # Save plotting label for when we report the above metrics
+            counts.append(len(have_factor))
+
+        return prevalence, OR, counts, y_labels
+
+
+
+def post_process(Y, output_dictionary, Y_test=None, ensemble_allocations=False, eps=1e-6, cutoff=1000, save_path=None):
     """
     After training our mmVAE model, process the output ready for plotting
+    
+    Note - patient identifiers are never inputted to this package, and so downstream analysis will need to cross reference any saved files against pre-saved identifiers.
     """
     
     predicted_labels = output_dictionary['cluster_allocations']
@@ -174,109 +209,61 @@ def post_process(Y, output_dictionary, Y_test=None, ensemble_allocations=False, 
     n_clusters = len(np.unique(predicted_labels))
     z_binary = output_dictionary['z_binary']
     L = output_dictionary['z_mean'].shape[1]
-
     
-    def cluster_process(Y, label, profiles, counts, _cutoff=1000, _eps=1e-6, _truncate=False):
-        """
-        """
-        assert len(counts) == profiles.shape[0]
-        assert sum(counts) == Y.shape[0]
-        
-        # Memory allocation, filtering out rare clusters for plotting
-        n_over = sum(counts > _cutoff)
-        prevalence = np.zeros((n_over, Y.shape[1]))
-        OR = np.zeros((n_over, Y.shape[1]))
-        CFA = np.zeros((n_over, profiles.shape[1]))                                                                                        # Cluster factor association matrix: The latent factors turned on in each cluster
-        y_labels, counts_over = [], []
-         
-        for idx, cluster in enumerate([i for i in range(len(counts)) if counts[i] > _cutoff]):                                           # For each cluster above cut-off size
-            prevalence[idx, :] = np.sum(Y[label == cluster + 1, :], axis=0)                                                             # Prevalence: The number of times the condition appears in the cluster
-            OR[idx, :] = np.mean(Y[label == cluster + 1, :], axis=0) / (_eps + np.mean(Y[label != cluster + 1, :], axis=0))              # Odds ratio:             
-            CFA[idx, :] = profiles[cluster, :]                                                                                          # unique profiles above cut-off size            
-            y_labels.append(f'{cluster + 1}') # (N={counts[cluster]})') #, topics {np.where(unique_profiles[cluster, :]!=0)[0] + 1}')                # Save plotting label for when we report the above metrics
-            counts_over.append(counts[cluster])
-        
-        if _truncate is not False:
-            OR[OR > _truncate] = _truncate   
-        
-        return prevalence, OR, CFA, counts_over, y_labels
-        
-    def topics_process(Y, z_binary, profiles, _eps=1e-6, _truncate=False):
-        """
-        """
-        assert Y.shape[0] == z_binary.shape[0]
-        assert z_binary.shape[1] == profiles.shape[1]
-        
-        # Memory allocation
-        OR, prevalence = [], []
-        y_labels, counts = [], []
-        # For each topic (latent dimension)
-        for topic in range(L):
-            mask = np.where(np.array(z_binary[:, topic]) == 1)[0]
-            xmask = np.where(np.array(z_binary[:, topic]) != 1)[0]
-            if len(mask) > 0:
-                prevalence.append(np.sum(Y[mask, :], axis=0))
-                prob_in = np.mean(Y[mask, :], axis=0)
-            else:
-                prevalence.append(np.zeros_like(Y[0, :]))
-                prob_in = np.zeros_like(Y[0, :])
+    # Save
+    if save_path is not None:
+        pd.DataFrame(output_dictionary['cluster_allocations']).to_csv(save_path + "cluster_allocations.csv")
+        pd.DataFrame(output_dictionary['unique_profiles']).to_csv(save_path + "factor_allocations.csv") 
 
-            if len(xmask) > 0:
-                prob_out = (_eps + np.mean(Y[xmask, :], axis=0))
-            else:
-                prob_out = _eps
-
-            OR.append(prob_in / prob_out)
-            y_labels.append(f'{topic + 1}') #(N={len(mask)})')
-            counts.append(len(mask))
-        OR = np.stack(OR, axis=0)
-        prevalence = np.stack(prevalence, axis=0)
-
-        # Truncate odds ratio for visualisation (in the case of extreme values in smaller clusters / rare conditions).
-        if _truncate is not False:
-            OR[OR > _truncate] = _truncate
-
-        return prevalence, OR, counts, y_labels
-    
         
     ###############################
     # ========= CLUSTERS ==========
     ###############################
-    prevalence, OR, CFA, counts_over, y_labels = cluster_process(Y,
-                                                                 output_dictionary['cluster_allocations'],
-                                                                 output_dictionary['unique_profiles'],
-                                                                 output_dictionary['counts'],
-                                                                 _cutoff = cutoff,
-                                                                 _truncate = 5
+    # TODO: remove cutoff here, and cut off only in plotting - then we don't need to process twice
+    prevalence, OR, CFA, counts_over, y_labels = process_clusters(Y,
+                                                                  output_dictionary['cluster_allocations'],
+                                                                  output_dictionary['unique_profiles'],
+                                                                  output_dictionary['counts'],
+                                                                  _cutoff = cutoff,
                                                                  )
     output_dictionary['prevalence_clusters'] = prevalence
     output_dictionary['OR_clusters'] = OR
     output_dictionary['cluster_factors'] = CFA
     output_dictionary['count_clusters'] = counts_over
     output_dictionary['cluster_labels'] = y_labels
-                                                                 
+    if save_path is not None:
+        prevalence, OR, CFA, counts_over, y_labels = process_clusters(Y,
+                                                                      output_dictionary['cluster_allocations'],
+                                                                      output_dictionary['unique_profiles'],
+                                                                      output_dictionary['counts'],
+                                                                      _cutoff = 0,
+                                                                     )
+        pd.DataFrame(OR).to_csv(save_path + "OR_clusters.csv")
+                                                        
                                                                  
         
     ###############################
-    # ========== TOPICS ===========
+    # ========== FACTORS ===========
     ###############################   
-    prevalence, OR, counts, y_labels = topics_process(Y, 
-                                                      output_dictionary['z_binary'],
-                                                      output_dictionary['unique_profiles'],
-                                                      _truncate = 5,
-                                                     )
+    prevalence, OR, counts, y_labels = process_factors(Y, output_dictionary['z_binary'])
     
     output_dictionary['prevalence_topics'] = prevalence
     output_dictionary['OR_topics'] = OR
     output_dictionary['count_topics'] = counts
     output_dictionary['topic_labels'] = y_labels
-    
+    # Save
+    if save_path is not None:
+        pd.DataFrame(OR).to_csv(save_path + "OR_factors.csv")
+
     
     ###############################
     # === OUT OF DISTRIBUTION ====
     ###############################   
+    if Y_test is not None:
+        # TODO: add OOD processing here, currently in the plotting file.
+        pass
     
-    
+        
     return output_dictionary
 
 
@@ -297,51 +284,51 @@ def get_acquired_order(date_frame):
     return date_frame
 
 
-def post_process_dates(Y, output_dictionary, truncate_or = 5, eps=1e-6, dates = False):
-    """
-    After training our mmVAE model, interrogate the clustering results in a temporal analysis
-    """
+# def post_process_dates(Y, output_dictionary, truncate_or = 5, eps=1e-6, dates = False):
+#     """
+#     After training our mmVAE model, interrogate the clustering results in a temporal analysis
+#     """
 
-    predicted_labels = output_dictionary['cluster_allocations']
-    counts = output_dictionary['counts']
-    n_clusters = len(np.unique(predicted_labels))
+#     predicted_labels = output_dictionary['cluster_allocations']
+#     counts = output_dictionary['counts']
+#     n_clusters = len(np.unique(predicted_labels))
 
-    if n_clusters < 30:                     # If there are less than X clusters we  calculate the odds ratio and prevalence of them all
-        cutoff = -1 
-    else:                                   # Else we only calculate OR and prevalence of those above a cutoff size
-        cutoff = 1000
-    n_clusters_over = sum(counts > cutoff)
+#     if n_clusters < 30:                     # If there are less than X clusters we  calculate the odds ratio and prevalence of them all
+#         cutoff = -1 
+#     else:                                   # Else we only calculate OR and prevalence of those above a cutoff size
+#         cutoff = 1000
+#     n_clusters_over = sum(counts > cutoff)
 
-    # Memory-alloc
-    disease_order = np.zeros((Y.shape[0], len(get_column_order())))
+#     # Memory-alloc
+#     disease_order = np.zeros((Y.shape[0], len(get_column_order())))
     
-    # For each sample
-    for idx_sample in range(Y.shape[0]):
-        pass
+#     # For each sample
+#     for idx_sample in range(Y.shape[0]):
+#         pass
         
     
-    #OR = np.zeros((n_clusters_over, len(get_column_order())))
-    cluster_axislabel = []
+#     #OR = np.zeros((n_clusters_over, len(get_column_order())))
+#     cluster_axislabel = []
 
-    # For each cluster above cut-off size
-    for idx, cluster in enumerate([i for i in range(len(counts)) if counts[i] > cutoff]):
-        # Prevalence: The number of times the condition appears in the cluster
-        first_disease_label[idx] = np.sum(Y[predicted_labels == cluster + 1, :], axis=0)
-        # Odds ratio: The nyumber of times it appears, divided by the number of times it appears elsewhere (with eps for stability)
-        #OR[idx, :] = np.mean(Y[predicted_labels == cluster + 1, :], axis=0) / (eps + np.mean(Y[predicted_labels != cluster + 1, :], axis=0))
+#     # For each cluster above cut-off size
+#     for idx, cluster in enumerate([i for i in range(len(counts)) if counts[i] > cutoff]):
+#         # Prevalence: The number of times the condition appears in the cluster
+#         first_disease_label[idx] = np.sum(Y[predicted_labels == cluster + 1, :], axis=0)
+#         # Odds ratio: The nyumber of times it appears, divided by the number of times it appears elsewhere (with eps for stability)
+#         #OR[idx, :] = np.mean(Y[predicted_labels == cluster + 1, :], axis=0) / (eps + np.mean(Y[predicted_labels != cluster + 1, :], axis=0))
         
-        # Save plotting label for when we report the above metrics
-        cluster_axislabel.append(f'{cluster}, n={counts[cluster]}')#, {np.where(unique_profiles[cluster, :]!=0)}')
+#         # Save plotting label for when we report the above metrics
+#         cluster_axislabel.append(f'{cluster}, n={counts[cluster]}')#, {np.where(unique_profiles[cluster, :]!=0)}')
 
-    # Truncate odds ratio for visualisation (in the case of extreme values in smaller clusters / rare conditions).
-    if truncate_or is not False:
-        OR[OR > truncate_or] = truncate_or
+#     # Truncate odds ratio for visualisation (in the case of extreme values in smaller clusters / rare conditions).
+#     if truncate_or is not False:
+#         OR[OR > truncate_or] = truncate_or
     
-    output_dictionary['prevalence'] = prevalence
-    output_dictionary['OR'] = OR
-    output_dictionary['cluster_axislabel'] = cluster_axislabel
+#     output_dictionary['prevalence'] = prevalence
+#     output_dictionary['OR'] = OR
+#     output_dictionary['cluster_axislabel'] = cluster_axislabel
     
-    return output_dictionary
+#     return output_dictionary
 
 
     

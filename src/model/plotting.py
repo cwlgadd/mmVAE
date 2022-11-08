@@ -64,7 +64,7 @@ def cluster_grid(grid,
 def odds_ratio(grid, counts, 
                figsize=[2, 1], save_path=None,
                xlabel=None, hide_x=False, remove_columns=False, colnames=None,
-               ylabel=None, y_ticks=[]):
+               ylabel=None, y_ticks=[], vmin=0, vmax=5):
 
     sns.set()
     
@@ -81,7 +81,7 @@ def odds_ratio(grid, counts,
         mask = [True for _ in range(grid.shape[1])]
     
     # Plot
-    sns.heatmap(grid[:, mask], cbar_ax=ax3, cbar_kws={"orientation": "vertical"}, cmap="YlGnBu", ax=ax1, linewidths=20/grid.shape[0])
+    sns.heatmap(grid[:, mask], cbar_ax=ax3, cbar_kws={"orientation": "vertical"}, cmap="YlGnBu", ax=ax1, linewidths=20/grid.shape[0], vmin=vmin, vmax=vmax)
 
     # Labels
     if hide_x is True or colnames is None:
@@ -157,7 +157,8 @@ def cluster_factor_association(grid,
         
 
 def plot_OOD_histogram():
-    plt.show()
+    # TODO
+    pass
 
     
 def plot_labelledtSNE(output_dictionary, tSNE, title, col_wrap=5, save_path=None):
