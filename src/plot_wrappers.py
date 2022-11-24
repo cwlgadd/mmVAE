@@ -3,12 +3,13 @@ import pickle
 import matplotlib.pyplot as plt
 # Local imports
 from model.plotting import *
+from experiment import encode
 from helpers import post_process
 
 
 def plot_restarts(diag_frame, all_dicts, losses, labels, 
-                  Y_test=None, log_odds=False, vmin=0, vmax=5,
-                  yaxis_scale=1, plot_threshold_frac=0.005, save_path=None, plot_path=None, ):
+                  Y_test=None, y_test_params=None, y_test_arch=None,
+                  save_path=None, plot_path=None, ):
     
     Y = diag_frame.to_numpy()
     disease_names = diag_frame.columns.tolist()
@@ -16,11 +17,10 @@ def plot_restarts(diag_frame, all_dicts, losses, labels,
     ###############################
     # =====  Best seed plots ======
     ###############################
-    threshold = Y.shape[0] * plot_threshold_frac
 
     seed = np.argmin(losses)
     print(f"Taking seed {seed} ")
-    best_dict = post_process(Y, all_dicts[seed], Y_test, cutoff=threshold, save_path=save_path)
+    best_dict = post_process(Y, all_dicts[seed], Y_test, save_path=plot_path)
 
 
     # BINARY CLUSTERS
@@ -29,19 +29,15 @@ def plot_restarts(diag_frame, all_dicts, losses, labels,
     cluster_grid(best_dict['prevalence_clusters'], 
                  colnames = disease_names,
                  ylabel='Cluster', y_ticks=best_dict['cluster_labels'], 
-                 figsize=[2, yaxis_scale], save_path=f'{plot_path}PrevalenceBinary')  
+                 figsize=[2, 2], save_path=f'{plot_path}PrevalenceBinary')  
 
 
     # Odds ratio
-    OR = best_dict['OR_clusters']
-    if log_odds is not False:
-        OR = np.log(OR+1e-2)
-    perc = [(100 * i) / Y.shape[0] for i in best_dict['count_clusters']]
-    odds_ratio(OR, perc, 
-               colnames=disease_names,
-               ylabel='Cluster',  y_ticks=best_dict['cluster_labels'], vmin=vmin, vmax=vmax,
-               figsize=[2.5, yaxis_scale], save_path=f'{plot_path}OddsRatioBinary')  
-
+    odds_ratio(best_dict['OR_clusters'], best_dict['count_clusters'], 
+               figsize=[2, 1], save_path=f'{plot_path}OddsRatioBinary',
+               x_ticks=disease_names,
+               ylabel='Cluster',  y_ticks=best_dict['cluster_labels'], perc_threshold = 1
+              )  
 
     # FACTORS
     # ===============
@@ -52,22 +48,18 @@ def plot_restarts(diag_frame, all_dicts, losses, labels,
                  save_path=f'{plot_path}PrevalenceTopic')
 
     # Odds ratio
-    OR = best_dict['OR_topics']
-    if log_odds is not False:
-        OR = np.log(OR+1e-2)
-    perc = [(100 * i)  / Y.shape[0] for i in best_dict['count_topics']]
-    odds_ratio(OR, perc,
-               colnames=disease_names,
-               ylabel='Latent factor', y_ticks=best_dict['topic_labels'], vmin=vmin, vmax=vmax,
-               figsize=[2.5, yaxis_scale], save_path=f'{plot_path}OddsRatioTopic')
-    # plot_cluster_grid(best_dict['disentangled_y'] / best_dict['prevalence_topics'], f"{method} disentangled disease probability", ylabels=best_dict['topic_labels'], save_path=f'{plot_path}Disentanglement')
+    odds_ratio(best_dict['OR_topics'], best_dict['count_topics'],
+               figsize=[2, 1], save_path=f'{plot_path}OddsRatioTopic',
+               x_ticks=disease_names,
+               ylabel='Latent factor', y_ticks=best_dict['topic_labels']
+              )
 
     #  CLUSTER-FACTOR ASSOCIATION MATRIX
     # ===============
     cluster_factor_association(best_dict['cluster_factors'].T,
                                xlabel='Cluster', ylabel='Latent factors',
                                x_ticks=best_dict['cluster_labels'], y_ticks=best_dict['topic_labels'], 
-                               figsize=[yaxis_scale * 1.5, 1.5], save_path=f'{plot_path}CTAssociation')
+                               figsize=[3, 1.5], save_path=f'{plot_path}CTAssociation')
        
 
     ###############################
@@ -75,7 +67,7 @@ def plot_restarts(diag_frame, all_dicts, losses, labels,
     ###############################
         
     if Y_test is not None:
-        binary_profiles = encode(Y_test, params['norm_beta'], 0, f"{save_path}_{seed}.pt",  **architecture)
+        binary_profiles = encode(Y_test, y_test_params['norm_beta'], 0, f"{save_path}_{seed}.pt",  **y_test_arch)
 
         # Topics
         prev_factors = (100/ Y_test.shape[0]) * binary_profiles.sum(axis=0)
@@ -205,5 +197,4 @@ def plot_restarts(diag_frame, all_dicts, losses, labels,
         #     count_clusters.append(counts[cluster])
 
                                  
-    return best_dict, f"{save_path}_{seed}"
-
+    return

@@ -63,56 +63,54 @@ def cluster_grid(grid,
     
 def odds_ratio(grid, counts, 
                figsize=[2, 1], save_path=None,
-               xlabel=None, hide_x=False, remove_columns=False, colnames=None,
-               ylabel=None, y_ticks=[], vmin=0, vmax=5):
+               xlabel=None, x_ticks=[],
+               ylabel=None, y_ticks=[], perc_threshold=1):
 
-    sns.set()
-    
+    percentage_prevalence = [(100 * i)  / np.sum(counts) for i in counts] # counts / np.sum()
+    mask = [i > perc_threshold for i in percentage_prevalence]
+    grid = grid[mask, :]
+
     # Create fig
-    gridspec_kw={'width_ratios': [4, 0.5, .05], 
-                 "wspace": .025
-                } 
-    fig, (ax1, ax2, ax3) = plt.subplots(1, 3, sharey=False, figsize=(figsize[0]*11.7, figsize[1]*8.27), gridspec_kw=gridspec_kw)
-    
-    # Option to not plot for conditions with no grid value above remove_columns 
-    if remove_columns is not False:
-        mask = np.max(grid, axis=0) > remove_columns
-    else:
-        mask = [True for _ in range(grid.shape[1])]
-    
+    sns.set()
+    fig, (ax1, ax2, ax3) = plt.subplots(1, 3, sharey=False, figsize=(figsize[0]*11.7, figsize[1]*8.27), gridspec_kw={'width_ratios': [4, 0.5, .05], "wspace": .025})
+        
+    bins = [1, 2, 4, 6]
+    grid = np.digitize(grid, bins)
+    bin_names = [f"<{bins[0]}"] + [f"{bins[i]}-{bins[i+1]}" for i in range(len(bins)-1)] + [f"{bins[-1]}+"]
+        
     # Plot
-    sns.heatmap(grid[:, mask], cbar_ax=ax3, cbar_kws={"orientation": "vertical"}, cmap="YlGnBu", ax=ax1, linewidths=20/grid.shape[0], vmin=vmin, vmax=vmax)
+    # cmap = sns.color_palette("light:b")
+    # cmap = sns.cubehelix_palette(n_colors=len(bins)+1)   # sns.color_palette()
+    # cmap = sns.light_palette("#79C")
+    cmap = sns.cubehelix_palette(start=2.5, rot=0, gamma=0.6, light=1, dark=0.3)
+    cbar_kws={"orientation": "vertical",
+              "ticks": [i + 0.5 for i in range(len(bins)+1)], 
+              "boundaries": [i for i in range(len(bins)+2)], 
+              "label": "Odds ratio: Probability of condition given cluster vs. probability without cluster"}
+    sns.heatmap(grid + 0.5, cbar_ax=ax3, cbar_kws=cbar_kws, cmap=cmap, ax=ax1, linewidths=20/grid.shape[0])
 
     # Labels
-    if hide_x is True or colnames is None:
-        ax1.set_xticklabels([])
-    else:
-        xticks = [b for a, b in zip(mask, colnames) if a]
-        ax1.set_xticklabels(xticks, rotation=90)    
+    ax1.set_xticklabels(x_ticks, rotation=90)    
     ax1.set_yticklabels(y_ticks, rotation=0)
-    
-    if xlabel is not None:
-        ax1.set_xlabel(xlabel, fontsize=18)
-    if ylabel is not None:
-        ax1.set_ylabel(ylabel, fontsize=18)
+    ax1.set_xlabel(xlabel, fontsize=18)
+    ax1.set_ylabel(ylabel, fontsize=18)
         
     # fix for mpl bug that cuts off top/bottom of seaborn viz
     b, t = ax1.get_ylim()          # discover the values for bottom and top
-    b += 0.5                              # Add 0.5 to the bottom
-    t -= 0.5                              # Subtract 0.5 from the top
-    ax1.set_ylim(b, t)             # update the ylim(bottom, top) values
+    ax1.set_ylim(b+0.5, t-0.5)     # update the ylim(bottom, top) values. Add 0.5 to the bottom. Subtract 0.5 from the top
     
     # Histogram plot
-    sns.distplot(range(len(counts)), len(counts), hist_kws={'weights': np.flip(counts)}, kde=False, vertical=True, ax=ax2)
-    ax2.set_xlabel('% Prevalence', fontsize=18)
+    sns.distplot(range(grid.shape[0]), grid.shape[0], hist_kws={'weights': np.flip(percentage_prevalence[:grid.shape[0]])}, kde=False, vertical=True, ax=ax2)
+    ax2.set_xlabel('Prevalence (%)', fontsize=18)
     ax2.set_yticklabels([])
-    ax2.set_ylim((0, len(counts)-1))
+    ax2.set_ylim((0, grid.shape[0]-1))
     
     ax1.tick_params(axis='x', labelsize=16)
     ax1.tick_params(axis='y', labelsize=14)
     ax2.tick_params(axis='x', labelsize=16)
     ax3.tick_params(axis='y', labelsize=16)
-    
+    ax3.set_yticklabels(bin_names)  # vertically oriented colorbar
+        
     if save_path is not None:
         plt.savefig(save_path + '.png', dpi=600, bbox_inches='tight', format='png')
     plt.show()
@@ -141,9 +139,7 @@ def cluster_factor_association(grid,
         
     # fix for mpl bug that cuts off top/bottom of seaborn viz
     b, t = ax1.get_ylim()          # discover the values for bottom and top
-    b += 0.5                              # Add 0.5 to the bottom
-    t -= 0.5                              # Subtract 0.5 from the top
-    ax1.set_ylim(b, t)             # update the ylim(bottom, top) values
+    ax1.set_ylim(b + 0.5, t - 0.5)             # update the ylim(bottom, top) values
 
     ax1.tick_params(axis='y', labelsize=14)
     ax1.tick_params(axis='x', labelsize=14)

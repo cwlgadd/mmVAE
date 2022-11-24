@@ -11,14 +11,15 @@ def get_column_order(plot=False):
     """
 
     if plot:
-        return [ "Cancer", "Asthma", "Female infertility",
+        return [ "Cancer", "Asthma", #"Female infertility",
                  "Allergic Rhin Conj",
                  "Migraine", "Anxiety", "Depression", "Substance misuse", "Alcohol problem", "Eating disorder",  "SMHmm",  "Other mental",  "Other headache",   
                  "AdrenalAll",
                  "Pituitary", "PCOS",  "Sarcoid",  "Leiomyoma",  "Endometriosis", "Retinal detachment", "PTH", "Heart failure",  "IHD/MI",  "Stroke", 
                  "Interstitial lung", "Blind", 
                  "COPD",  "Solid organ transplant", "Bronchiectasis", "Neuro development", "Atopic eczema", 
-                 "Cardiomyopathy", "Cystic fybrosis", "Sickle cell", "Pulminary Heart", "IBS",   "Turners syndrome", "Marfan syndrome", "HIV",    "Diabetes", "Diabetes (retino)", 
+                 "Cardiomyopathy", "Cystic fybrosis", "Sickle cell", "Pulminary Heart", "IBS",   "Turners syndrome", "Marfan syndrome", #"HIV", 
+                "Diabetes", "Diabetes (retino)", 
                  "Hypertension", "Spina bifida", "Congenital Heart",
                  "Vertebrae",  "Thyroid",
                  "Prithrombocytopenia",
@@ -31,14 +32,15 @@ def get_column_order(plot=False):
                  "Atrial fibrillation", "Haemophilia","IIH", "Multiple sclerosis", "Somatoform", "OSA","Deaf", 
                  "Cataract",]
     else:
-        return ["CancerAll", "asthmalonglist2018", "female_infertility",
+        return ["CancerAll", "asthmalonglist2018", #"female_infertility",
                 "AllergicRhinConj",
                 "migraine", "AnxietyPTSDdiag",  "depressionDiag", "substance_misuse", "alcoholproblem", "eatingdisorderuom",  "SMHmm",  "OthMental",  "OthHeadache",   
                 "AdrenalAll",
                 "Pituitary","pcoskoo",  "sarcoid",  "leiomyoma",  "endometriosis", "retinal_detach", "pth", "hfincidenceprevkoo",  "IHD_MI",  "stroketiaincidprevkoo", 
                 "interstitiallungdiseasemm", "blindmm", 
                 "copd",  "solidorgantransplant", "bronchiectasisdraftv1", "NeuroDev", "atopiceczema_mm", 
-                "Cardiomyopathy", "cf", "sickle_cell", "PulmHtn", "ibs_mm",   "turnerssyndrome_imrd", "marfansyndrome_imrd", "HIVall",    "DiabAll", "DiabRetino", 
+                "Cardiomyopathy", "cf", "sickle_cell", "PulmHtn", "ibs_mm",   "turnerssyndrome_imrd", "marfansyndrome_imrd", #"HIVall",   
+                "DiabAll", "DiabRetino", 
                 "hypertension", "spina_bifida", "CongHeart",
                 "Vertebrae",  "Thyroid",
                 "prithrombocytopenia_imrd",
@@ -143,7 +145,7 @@ def similarity_matrix(allocations):
     return similarity_matrix
 
 
-def process_clusters(Y, allocation, profiles, counts, _cutoff=1000):
+def process_clusters(Y, allocation, profiles, counts, _cutoff=0):
     """
     """
     assert len(counts) == profiles.shape[0]
@@ -196,7 +198,7 @@ def process_factors(Y, z_binary):
 
 
 
-def post_process(Y, output_dictionary, Y_test=None, ensemble_allocations=False, eps=1e-6, cutoff=1000, save_path=None):
+def post_process(Y, output_dictionary, Y_test=None, ensemble_allocations=False, eps=1e-6, save_path=None):
     """
     After training our mmVAE model, process the output ready for plotting
     
@@ -209,37 +211,22 @@ def post_process(Y, output_dictionary, Y_test=None, ensemble_allocations=False, 
     n_clusters = len(np.unique(predicted_labels))
     z_binary = output_dictionary['z_binary']
     L = output_dictionary['z_mean'].shape[1]
-    
-    # Save
-    if save_path is not None:
-        pd.DataFrame(output_dictionary['cluster_allocations']).to_csv(save_path + "cluster_allocations.csv")
-        pd.DataFrame(output_dictionary['unique_profiles']).to_csv(save_path + "factor_allocations.csv") 
-
         
     ###############################
     # ========= CLUSTERS ==========
     ###############################
     # TODO: remove cutoff here, and cut off only in plotting - then we don't need to process twice
-    prevalence, OR, CFA, counts_over, y_labels = process_clusters(Y,
-                                                                  output_dictionary['cluster_allocations'],
-                                                                  output_dictionary['unique_profiles'],
-                                                                  output_dictionary['counts'],
-                                                                  _cutoff = cutoff,
-                                                                 )
+    prevalence, OR, CFA, counts, y_labels = process_clusters(Y,
+                                                             output_dictionary['cluster_allocations'],
+                                                             output_dictionary['unique_profiles'],
+                                                             output_dictionary['counts'],
+                                                             )
     output_dictionary['prevalence_clusters'] = prevalence
     output_dictionary['OR_clusters'] = OR
     output_dictionary['cluster_factors'] = CFA
-    output_dictionary['count_clusters'] = counts_over
+    output_dictionary['count_clusters'] = counts
     output_dictionary['cluster_labels'] = y_labels
-    if save_path is not None:
-        prevalence, OR, CFA, counts_over, y_labels = process_clusters(Y,
-                                                                      output_dictionary['cluster_allocations'],
-                                                                      output_dictionary['unique_profiles'],
-                                                                      output_dictionary['counts'],
-                                                                      _cutoff = 0,
-                                                                     )
-        pd.DataFrame(OR).to_csv(save_path + "OR_clusters.csv")
-                                                        
+    clusters = len(counts)
                                                                  
         
     ###############################
@@ -251,9 +238,6 @@ def post_process(Y, output_dictionary, Y_test=None, ensemble_allocations=False, 
     output_dictionary['OR_topics'] = OR
     output_dictionary['count_topics'] = counts
     output_dictionary['topic_labels'] = y_labels
-    # Save
-    if save_path is not None:
-        pd.DataFrame(OR).to_csv(save_path + "OR_factors.csv")
 
     
     ###############################
@@ -262,6 +246,55 @@ def post_process(Y, output_dictionary, Y_test=None, ensemble_allocations=False, 
     if Y_test is not None:
         # TODO: add OOD processing here, currently in the plotting file.
         pass
+    
+    ###############################
+    # =========== SAVE ============
+    ###############################       
+    if save_path is not None:
+        df = pd.DataFrame(output_dictionary['cluster_allocations'] + 1)
+        df.columns = ["Cluster"]
+        df.index.name = "Patient index"
+        df.to_excel(save_path + "_cluster_allocations.xlsx")
+        
+        df = pd.DataFrame(output_dictionary['unique_profiles'])
+        df.columns = [f'Latent Factor {i+1}' for i in range(L)]
+        df.index.name = "Cluster index"
+        df.to_excel(save_path + "_cluster_factor_association.xlsx")
+                                                                    # index=get_column_order(plot=False),
+            
+        df= pd.DataFrame(output_dictionary['OR_clusters'])
+        df.columns = get_column_order(plot=False)
+        df.index.name = "Cluster index"
+        df.to_excel(save_path + "_OR_clusters.xlsx")
+                                                                # index=[f"Cluster {i+1}" for i in range(clusters)],
+            
+        df = pd.DataFrame(output_dictionary['OR_topics'])
+        df.columns = get_column_order(plot=False)
+        df.index.name = "Factor index"
+        df.to_excel(save_path + "_OR_factors.xlsx")
+                                                              # index=[f"Factor {i+1}" for i in range(L)],
+            
+        df = pd.DataFrame(output_dictionary['prevalence_clusters'])
+        df.columns = get_column_order(plot=False)
+        df.index.name = "Cluster index"
+        df.to_excel(save_path + "_prevalence_clusters.xlsx")
+        
+        
+        df = pd.DataFrame(output_dictionary['prevalence_topics'])
+        df.columns = get_column_order(plot=False)
+        df.index.name = "Factor index"
+        df.to_excel(save_path + "_prevalence_factors.xlsx")
+        
+        df = pd.DataFrame(output_dictionary['count_clusters'])
+        df.columns = ["Patients in cluster"]
+        df.index.name = "Cluster index"
+        df.to_excel(save_path + "_count_clusters.xlsx")
+        
+        df = pd.DataFrame(output_dictionary['count_topics'])
+        df.columns = ["Patients in factor"]
+        df.index.name = "Factor index"
+        df.to_excel(save_path + "_count_factors.xlsx")
+
     
         
     return output_dictionary

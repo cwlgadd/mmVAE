@@ -184,8 +184,8 @@ def fit_restarts(diag_frame, architecture, params,
                     ami_ij = AMI(labels[i], labels[j], average_method='arithmetic')
                     adjusted_mutual_score[i, j] = ami_ij
                     avg_ami.append(ami_ij)
-        print(f"Adjusted mutual information score\n {adjusted_mutual_score}")
-        print(f"Averaged adjusted mutual information score\n {np.mean(avg_ami)}")
+        # print(f"Adjusted mutual information score\n {adjusted_mutual_score}")
+        print(f"Averaged adjusted mutual information score over {len(avg_ami)} seeds\n {np.mean(avg_ami)} +- {np.std(avg_ami)}")
 
         if similarity_samples is not None:
             allocations = np.stack(labels, axis=1)
