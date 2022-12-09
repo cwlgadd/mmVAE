@@ -116,6 +116,7 @@ class RelaxedCategoricalAutoEncoder(nn.Module):
         
         # see Appendix B from VAE paper: Kingma and Welling. Auto-Encoding Variational Bayes. ICLR, 2014 ====> https://arxiv.org/abs/1312.6114
         # If the prior is the uniform distribution, the KL is the entropy 
+        tmp = - mu*torch.log(mu + eps) - (1-mu)*torch.log((1-mu) + eps)
         H = torch.sum(- mu*torch.log(mu + eps) - (1-mu)*torch.log((1-mu) + eps))
         kld_loss = -H
 

@@ -26,32 +26,33 @@ def plot_restarts(diag_frame, all_dicts, losses, labels,
     # BINARY CLUSTERS
     # ===============
     # Prevalence 
-    cluster_grid(best_dict['prevalence_clusters'], 
-                 colnames = disease_names,
-                 ylabel='Cluster', y_ticks=best_dict['cluster_labels'], 
-                 figsize=[2, 2], save_path=f'{plot_path}PrevalenceBinary')  
+    cluster_grid(best_dict['prevalence_clusters'], cluster_names=best_dict['cluster_labels'], condition_names=disease_names,
+                 counts=best_dict['count_clusters'],                   
+                 save_path=f'{plot_path}PrevalenceBinary',
+                 ylabel='Cluster'
+                )  
 
 
     # Odds ratio
-    odds_ratio(best_dict['OR_clusters'], best_dict['count_clusters'], 
-               figsize=[2, 1], save_path=f'{plot_path}OddsRatioBinary',
-               x_ticks=disease_names,
-               ylabel='Cluster',  y_ticks=best_dict['cluster_labels'], perc_threshold = 1
+    odds_ratio(best_dict['OR_clusters'], cluster_names=best_dict['cluster_labels'], condition_names=disease_names,
+               counts=best_dict['count_clusters'], perc_threshold=1,
+               save_path=f'{plot_path}OddsRatioBinary',
+               ylabel='Cluster',  
               )  
 
     # FACTORS
     # ===============
     # Prevalence 
-    cluster_grid(best_dict['prevalence_topics'],
-                 colnames=disease_names,
-                 ylabel='Latent factors', y_ticks=best_dict['topic_labels'], 
-                 save_path=f'{plot_path}PrevalenceTopic')
+    cluster_grid(best_dict['prevalence_topics'], cluster_names=best_dict['topic_labels'], condition_names=disease_names,
+                 save_path=f'{plot_path}PrevalenceTopic',
+                 ylabel='Latent factor',
+                )
 
     # Odds ratio
-    odds_ratio(best_dict['OR_topics'], best_dict['count_topics'],
-               figsize=[2, 1], save_path=f'{plot_path}OddsRatioTopic',
-               x_ticks=disease_names,
-               ylabel='Latent factor', y_ticks=best_dict['topic_labels']
+    odds_ratio(best_dict['OR_topics'], cluster_names=best_dict['topic_labels'], condition_names=disease_names,
+               counts=best_dict['count_topics'], perc_threshold=None,
+               save_path=f'{plot_path}OddsRatioTopic',
+               ylabel='Latent factor',
               )
 
     #  CLUSTER-FACTOR ASSOCIATION MATRIX

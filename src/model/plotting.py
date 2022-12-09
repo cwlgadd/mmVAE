@@ -5,12 +5,18 @@ import pandas as pd
 import helpers
 
 
-def cluster_grid(grid,
+def cluster_grid(grid, cluster_names, condition_names,
+                 counts=None, perc_threshold=1, 
                  title=None, figsize=[2, 1], save_path=None, 
-                 xlabel=None, hide_x=False, remove_columns=False, colnames=None,
-                 ylabel=None, y_ticks=[]):       
+                 xlabel=None, ylabel=None):       
     """ 
     """
+    if counts is not None:
+        percentage_prevalence = [(100 * i)  / np.sum(counts) for i in counts] # counts / np.sum()
+        cmask = [i > perc_threshold for i in percentage_prevalence]
+        grid = grid[cmask, :]
+        cluster_names = cluster_names[:grid.shape[0]]
+
     sns.set()
     
     # Create fig
@@ -19,23 +25,13 @@ def cluster_grid(grid,
                 } 
     fig, (ax, ax2) = plt.subplots(1, 2, sharey=False, figsize=(figsize[0]*11.7, figsize[1]*8.27), gridspec_kw=gridspec_kw)
 
-    # Option to not plot for conditions with no grid value above remove_columns
-    if remove_columns is not False:
-        mask = np.max(grid, axis=0) > remove_columns
-    else:
-        mask = [True for _ in range(grid.shape[1])]
-
     # Plot
-    sns.heatmap(grid[:, mask], cbar_ax=ax2, cmap="YlGnBu", ax=ax, linewidths=20/grid.shape[0])
+    cmap = sns.cubehelix_palette(start=2.5, rot=0, gamma=0.6, light=1, dark=0.3)
+    sns.heatmap(grid, cbar_ax=ax2, cmap=cmap, ax=ax, linewidths=20/grid.shape[0])
  
     # Labels
-    if hide_x is True or colnames is None:
-        ax.set_xticklabels([])
-    else:
-        xticks = [b for a, b in zip(mask, colnames) if a]
-        ax.set_xticklabels(xticks, rotation=90)    
-    ax.set_yticklabels(y_ticks, rotation=0)
-    
+    ax.set_xticklabels(condition_names, rotation=90)    
+    ax.set_yticklabels(cluster_names, rotation=0)                     
     if xlabel is not None:
         ax.set_xlabel(xlabel,  fontsize=18)
     if ylabel is not None:
@@ -49,10 +45,8 @@ def cluster_grid(grid,
         ax.set_title(title)   
     
     # fix for mpl bug that cuts off top/bottom of seaborn viz
-    b, t = ax.get_ylim()                    # discover the values for bottom and top
-    b += 0.5                                # Add 0.5 to the bottom
-    t -= 0.5                                # Subtract 0.5 from the top
-    ax.set_ylim(b, t)                       # update the ylim(bottom, top) values
+    b, t = ax.get_ylim()          # discover the values for bottom and top
+    ax.set_ylim(b+0.5, t-0.5)      # update the ylim(bottom, top) values. Add 0.5 to the bottom. Subtract 0.5 from the top
     
     ax.grid(True)
 
@@ -61,14 +55,16 @@ def cluster_grid(grid,
     plt.show()
     
     
-def odds_ratio(grid, counts, 
+def odds_ratio(grid, cluster_names, condition_names,
+               counts, perc_threshold=None,
                figsize=[2, 1], save_path=None,
-               xlabel=None, x_ticks=[],
-               ylabel=None, y_ticks=[], perc_threshold=1):
+               xlabel=None, ylabel=None):
 
     percentage_prevalence = [(100 * i)  / np.sum(counts) for i in counts] # counts / np.sum()
-    mask = [i > perc_threshold for i in percentage_prevalence]
-    grid = grid[mask, :]
+    if perc_threshold is not None:
+        mask = [i > perc_threshold for i in percentage_prevalence]
+        grid = grid[mask, :]
+        cluster_names = cluster_names[:grid.shape[0]]
 
     # Create fig
     sns.set()
@@ -79,9 +75,6 @@ def odds_ratio(grid, counts,
     bin_names = [f"<{bins[0]}"] + [f"{bins[i]}-{bins[i+1]}" for i in range(len(bins)-1)] + [f"{bins[-1]}+"]
         
     # Plot
-    # cmap = sns.color_palette("light:b")
-    # cmap = sns.cubehelix_palette(n_colors=len(bins)+1)   # sns.color_palette()
-    # cmap = sns.light_palette("#79C")
     cmap = sns.cubehelix_palette(start=2.5, rot=0, gamma=0.6, light=1, dark=0.3)
     cbar_kws={"orientation": "vertical",
               "ticks": [i + 0.5 for i in range(len(bins)+1)], 
@@ -90,8 +83,8 @@ def odds_ratio(grid, counts,
     sns.heatmap(grid + 0.5, cbar_ax=ax3, cbar_kws=cbar_kws, cmap=cmap, ax=ax1, linewidths=20/grid.shape[0])
 
     # Labels
-    ax1.set_xticklabels(x_ticks, rotation=90)    
-    ax1.set_yticklabels(y_ticks, rotation=0)
+    ax1.set_xticklabels(condition_names, rotation=90)    
+    ax1.set_yticklabels(cluster_names, rotation=0)
     ax1.set_xlabel(xlabel, fontsize=18)
     ax1.set_ylabel(ylabel, fontsize=18)
         

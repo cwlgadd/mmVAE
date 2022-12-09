@@ -111,7 +111,7 @@ def summarise_binary_profiles(binary_profiles, sort='counts', verbose=0):
 
     unique_profiles, cluster_allocations, counts = np.unique(binary_profiles, axis=0, return_inverse=True, return_counts=True)
     
-    if sort == 'counts':                                            # Return in order of largest cluster first
+    if sort == 'counts':                           # Return in order of largest cluster first
         reorder_inds = counts.argsort()[::-1]
     elif sort == 'divisive':                                         # Return in order of unique profile diversion. e.g. (0,0), (1, 0) (0, 1), (1, 1)
         reorder_inds = [i for i in range(len(counts))]
