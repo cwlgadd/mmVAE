@@ -57,9 +57,9 @@ def fit_mmVAE(Y,
     opt = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=0)
     scheduler = ReduceLROnPlateau(opt, 'min', patience=2, verbose=True, factor=0.75, min_lr=1e-3)
     
-    model.train()
     lrs, train_recons, train_Hs, val_recons, val_Hs = [], [], [], [], []
     for epoch in range(epochs):
+        model.train()
         
         # Training 
         # Update concrete distribution temperature
@@ -83,6 +83,7 @@ def fit_mmVAE(Y,
         # Validation check
         if epoch % validate_every == 0:
             with torch.no_grad():
+                model.eval()
                 val_loss, val_recon, val_H = 0, 0, 0
                 for val_batch in val_loader:
                     disease_prob, mu = model(val_batch, tmp_schedule[-1])
@@ -185,7 +186,7 @@ def fit_restarts(diag_frame, architecture, params,
                     adjusted_mutual_score[i, j] = ami_ij
                     avg_ami.append(ami_ij)
         # print(f"Adjusted mutual information score\n {adjusted_mutual_score}")
-        print(f"Averaged adjusted mutual information score over {len(avg_ami)} seeds\n {np.mean(avg_ami)} +- {np.std(avg_ami)}")
+        print(f"Averaged adjusted mutual information score over {len(avg_ami)} combinations of seeds\n {np.mean(avg_ami)} +- {np.std(avg_ami)}")
 
         if similarity_samples is not None:
             allocations = np.stack(labels, axis=1)

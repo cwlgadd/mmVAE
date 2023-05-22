@@ -55,10 +55,10 @@ def cluster_grid(grid, cluster_names, condition_names,
     plt.show()
     
     
-def odds_ratio(grid, cluster_names, condition_names,
-               counts, perc_threshold=None,
-               figsize=[2, 1], save_path=None,
-               xlabel=None, ylabel=None):
+def relative_risk(grid, cluster_names, condition_names,
+                  counts, perc_threshold=None,
+                  figsize=[2, 1], save_path=None,
+                  xlabel=None, ylabel=None, cbar_label=None):
 
     percentage_prevalence = [(100 * i)  / np.sum(counts) for i in counts] # counts / np.sum()
     if perc_threshold is not None:
@@ -79,7 +79,7 @@ def odds_ratio(grid, cluster_names, condition_names,
     cbar_kws={"orientation": "vertical",
               "ticks": [i + 0.5 for i in range(len(bins)+1)], 
               "boundaries": [i for i in range(len(bins)+2)], 
-              "label": "Odds ratio: Probability of condition given cluster vs. probability without cluster"}
+              "label": "Metric" if cbar_label is None else cbar_label}
     sns.heatmap(grid + 0.5, cbar_ax=ax3, cbar_kws=cbar_kws, cmap=cmap, ax=ax1, linewidths=20/grid.shape[0])
 
     # Labels

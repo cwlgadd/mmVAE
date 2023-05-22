@@ -6,8 +6,68 @@ import pandas as pd
 
 
 def get_column_order(plot=False):
+    # TODO: refactor out of code
+    print("Deprecated ")
+    return get_column_order_SAIL(plot=plot)
+
+
+def get_column_order_ML4H(plot=False):
     """
-    Return the order in which we want to plot the multi-morbidity diseases in the ML4H paper
+    Used for the ML4H@NeurIPs paper. All 79 conditions.
+    
+    Get the list of conditions to filter, or return the names to be used to plot the multi-morbidity diseases 
+    """
+
+    if plot:
+        return [ "Cancer", "Asthma", "Female infertility",
+                 "Allergic Rhin Conj",
+                 "Migraine", "Anxiety", "Depression", "Substance misuse", "Alcohol problem", "Eating disorder",  "SMHmm",  "Other mental",  "Other headache",   
+                 "AdrenalAll",
+                 "Pituitary", "PCOS",  "Sarcoid",  "Leiomyoma",  "Endometriosis", "Retinal detachment", "PTH", "Heart failure",  "IHD/MI",  "Stroke", 
+                 "Interstitial lung", "Blind", 
+                 "COPD",  "Solid organ transplant", "Bronchiectasis", "Neuro development", "Atopic eczema", 
+                 "Cardiomyopathy", "Cystic fybrosis", "Sickle cell", "Pulminary Heart", "IBS",   "Turners syndrome", "Marfan syndrome", "HIV", 
+                "Diabetes", "Diabetes (retino)", 
+                 "Hypertension", "Spina bifida", "Congenital Heart",
+                 "Vertebrae",  "Thyroid",
+                 "Prithrombocytopenia",
+                 "Pernicious anaemia",  "Coeliac", "Auto Skin", "Inflam Bowel", "Inflam Eye", "Spond Arth", "Psoriasis",
+                 "Osteoporosis", "Chronic back pain", "Peripheral neuro", "Urolithiasis", "Scoliosis", "Cholelithiasis",
+                 "Other skin", 
+                 "VTE", "Valve",  "Epilepsy", 
+                 "Osteoarthritis", 
+                 "Slesystemic", "Ulcer peptic",  "Ehler",  "Chronic Liver", "Chronic Kidney", "Inflam Arth",
+                 "Atrial fibrillation", "Haemophilia","IIH", "Multiple sclerosis", "Somatoform", "OSA","Deaf", 
+                 "Cataract",]
+    else:
+        return ["CancerAll", "asthmalonglist2018", "female_infertility",
+                "AllergicRhinConj",
+                "migraine", "AnxietyPTSDdiag",  "depressionDiag", "substance_misuse", "alcoholproblem", "eatingdisorderuom",  "SMHmm",  "OthMental",  "OthHeadache",   
+                "AdrenalAll",
+                "Pituitary","pcoskoo",  "sarcoid",  "leiomyoma",  "endometriosis", "retinal_detach", "pth", "hfincidenceprevkoo",  "IHD_MI",  "stroketiaincidprevkoo", 
+                "interstitiallungdiseasemm", "blindmm", 
+                "copd",  "solidorgantransplant", "bronchiectasisdraftv1", "NeuroDev", "atopiceczema_mm", 
+                "Cardiomyopathy", "cf", "sickle_cell", "PulmHtn", "ibs_mm",   "turnerssyndrome_imrd", "marfansyndrome_imrd", "HIVall",   
+                "DiabAll", "DiabRetino", 
+                "hypertension", "spina_bifida", "CongHeart",
+                "Vertebrae",  "Thyroid",
+                "prithrombocytopenia_imrd",
+                "perniciousanaemia",  "coeliac", "AutoSkin", "InflamBowel", "InflamEye", "SpondArth", "psoriasis_mm",
+                "osteoporosis", "chronicbackpain", "periph_neuro", "urolithiasis", "scoliosis", "cholelithiasis",
+                "OthSkin", 
+                "VTEall", "Valve",  "epilepsy_mm", 
+                "oa", 
+                "slesystemic2019", "ulcer_peptic",  "Ehler",  "ChrLiverAll", "CKDall", "InflamArth",
+                "af", "haemophilia_imrd","iih", "ms", "Somatoform", "osafinal","deaf", 
+                "cataract",]
+    
+
+
+def get_column_order_SAIL(plot=False):
+    """
+    Used for the SAIL top-level comparison.  72 conditions.
+    HIV and female infertilty are removed as these are not available in SAIL.
+    Get the list of conditions to filter, or return the names to be used to plot
     """
 
     if plot:
@@ -40,6 +100,62 @@ def get_column_order(plot=False):
                 "interstitiallungdiseasemm", "blindmm", 
                 "copd",  "solidorgantransplant", "bronchiectasisdraftv1", "NeuroDev", "atopiceczema_mm", 
                 "Cardiomyopathy", "cf", "sickle_cell", "PulmHtn", "ibs_mm",   "turnerssyndrome_imrd", "marfansyndrome_imrd", #"HIVall",   
+                "DiabAll", "DiabRetino", 
+                "hypertension", "spina_bifida", "CongHeart",
+                "Vertebrae",  "Thyroid",
+                "prithrombocytopenia_imrd",
+                "perniciousanaemia",  "coeliac", "AutoSkin", "InflamBowel", "InflamEye", "SpondArth", "psoriasis_mm",
+                "osteoporosis", "chronicbackpain", "periph_neuro", "urolithiasis", "scoliosis", "cholelithiasis",
+                "OthSkin", 
+                "VTEall", "Valve",  "epilepsy_mm", 
+                "oa", 
+                "slesystemic2019", "ulcer_peptic",  "Ehler",  "ChrLiverAll", "CKDall", "InflamArth",
+                "af", "haemophilia_imrd","iih", "ms", "Somatoform", "osafinal","deaf", 
+                "cataract",]
+    
+    
+def get_column_order_SAIL_uncommon(plot=False):
+    """
+    Used for the SAIL 2nd-level comparison. HIV and female infertilty are removed as these are not available in SAIL. 
+    
+    Common excluded conditions:
+        - asthmalonglist2018
+        - AllergicRhinConj
+        - migraine
+        - AnxietyPTSDdiag
+        - depressionDiag
+    
+    Get the list of conditions to filter, or return the names to be used to plot the multi-morbidity diseases 
+    """
+
+    if plot:
+        return [ "Cancer",  #"Female infertility",
+                 "Substance misuse", "Alcohol problem", "Eating disorder",  "SMHmm",  "Other headache",   
+                 "AdrenalAll",
+                 "Pituitary", "PCOS",  "Sarcoid",  "Leiomyoma",  "Endometriosis", "Retinal detachment", "PTH", "Heart failure",  "IHD/MI",  "Stroke", 
+                 "Interstitial lung", "Blind", 
+                 "COPD",  "Solid organ transplant", "Bronchiectasis", "Neuro development", "Atopic eczema", 
+                 "Cardiomyopathy", "Cystic fybrosis", "Sickle cell", "Pulminary Heart",  "Turners syndrome", "Marfan syndrome", #"HIV", 
+                "Diabetes", "Diabetes (retino)", 
+                 "Hypertension", "Spina bifida", "Congenital Heart",
+                 "Vertebrae",  "Thyroid",
+                 "Prithrombocytopenia",
+                 "Pernicious anaemia",  "Coeliac", "Auto Skin", "Inflam Bowel", "Inflam Eye", "Spond Arth", "Psoriasis",
+                 "Osteoporosis", "Chronic back pain", "Peripheral neuro", "Urolithiasis", "Scoliosis", "Cholelithiasis",
+                 "Other skin", 
+                 "VTE", "Valve",  "Epilepsy", 
+                 "Osteoarthritis", 
+                 "Slesystemic", "Ulcer peptic",  "Ehler",  "Chronic Liver", "Chronic Kidney", "Inflam Arth",
+                 "Atrial fibrillation", "Haemophilia","IIH", "Multiple sclerosis", "Somatoform", "OSA","Deaf", 
+                 "Cataract",]
+    else:
+        return ["CancerAll", #"female_infertility",
+                "substance_misuse", "alcoholproblem", "eatingdisorderuom",  "SMHmm",  "OthHeadache",   
+                "AdrenalAll",
+                "Pituitary","pcoskoo",  "sarcoid",  "leiomyoma",  "endometriosis", "retinal_detach", "pth", "hfincidenceprevkoo",  "IHD_MI",  "stroketiaincidprevkoo", 
+                "interstitiallungdiseasemm", "blindmm", 
+                "copd",  "solidorgantransplant", "bronchiectasisdraftv1", "NeuroDev", "atopiceczema_mm", 
+                "Cardiomyopathy", "cf", "sickle_cell", "PulmHtn",  "turnerssyndrome_imrd", "marfansyndrome_imrd", #"HIVall",   
                 "DiabAll", "DiabRetino", 
                 "hypertension", "spina_bifida", "CongHeart",
                 "Vertebrae",  "Thyroid",
@@ -155,18 +271,39 @@ def process_clusters(Y, allocation, profiles, counts, _cutoff=0):
     # Memory allocation, filtering out rare clusters for plotting
     n_over = sum(counts > _cutoff)
     prevalence = np.zeros((n_over, Y.shape[1]))
+    RR = np.zeros((n_over, Y.shape[1]))
+    RR_deviation = np.zeros((n_over, Y.shape[1]))
     OR = np.zeros((n_over, Y.shape[1]))
+    OR_deviation = np.zeros((n_over, Y.shape[1]))
     CFA = np.zeros((n_over, profiles.shape[1]))                                                                                        # Cluster factor association matrix: The latent factors turned on in each cluster
     y_labels, counts_over = [], []
 
-    for idx, cluster in enumerate([i for i in range(len(counts)) if counts[i] > _cutoff]):                                           # For each cluster above cut-off size
-        prevalence[idx, :] = np.sum(Y[allocation == cluster + 1, :], axis=0)                                                             # Prevalence: The number of times the condition appears in the cluster
-        OR[idx, :] = (_eps + np.mean(Y[allocation == cluster + 1, :], axis=0)) / (_eps + np.mean(Y[allocation != cluster + 1, :], axis=0))              # Odds ratio:             
-        CFA[idx, :] = profiles[cluster, :]                                                                                          # unique profiles above cut-off size            
-        y_labels.append(f'{cluster + 1}') # (N={counts[cluster]})') #, topics {np.where(unique_profiles[cluster, :]!=0)[0] + 1}')                # Save plotting label for when we report the above metrics
+    for c_idx, cluster in enumerate([i for i in range(len(counts)) if counts[i] > _cutoff]):                                                    # For each cluster above cut-off size
+        # Prevalence: The number of times the condition appears in the cluster
+        prevalence[c_idx, :] = np.sum(Y[allocation == cluster + 1, :], axis=0)         
+        
+        a = np.sum(Y[allocation == cluster + 1, :], axis=0)                             # count with condition | in cluster 
+        b = np.sum(1 - Y[allocation == cluster + 1, :], axis=0)                         # count without condition | in cluster
+        c = np.sum(Y[allocation != cluster + 1, :], axis=0)                             # count with condition | not in cluster
+        d = np.sum(1- Y[allocation != cluster + 1, :], axis=0)                          # count without condition | not in cluster
+        
+        # Relative risks:   
+        RR[c_idx, :] = (a/(a+b))/(c/(c+d))
+        RR_deviation[c_idx, :] = np.sqrt( 1/a - 1/(a+b) + 1/c - 1/(c+d) )
+        assert np.all(RR[c_idx, :] == np.mean(Y[allocation == cluster + 1, :], axis=0) / np.mean(Y[allocation != cluster + 1, :], axis=0))
+        
+        # Odds ratio
+        OR[c_idx, :] = (a*d)/(b*c)
+        OR_deviation[c_idx, :] = np.sqrt(1/a + 1/b + 1/c + 1/d)
+        
+        # Cluster factor association matrix
+        CFA[c_idx, :] = profiles[cluster, :]                                                                                                    # unique profiles above cut-off size  
+        
+        # Misc
+        y_labels.append(f'{cluster + 1}') # (N={counts[cluster]})') #, topics {np.where(unique_profiles[cluster, :]!=0)[0] + 1}')             # Save plotting label for when we report the above metrics
         counts_over.append(counts[cluster])
 
-    return prevalence, OR, CFA, counts_over, y_labels
+    return prevalence, RR, RR_deviation, OR, OR_deviation, CFA, counts_over, y_labels
 
 
 def process_factors(Y, z_binary):
@@ -175,13 +312,14 @@ def process_factors(Y, z_binary):
         assert Y.shape[0] == z_binary.shape[0]
         _eps = 1e-12                                               # For numerical stability if a factor is empty or has no conditions associated
 
-        N = Y.shape[0]
-        D = Y.shape[1]
         L = z_binary.shape[1]
         
         # Memory allocation, filtering out rare clusters for plotting
-        prevalence = np.zeros((L, D))
-        OR = np.zeros((L, D))
+        prevalence = np.zeros((L, Y.shape[1]))
+        RR = np.zeros((L, Y.shape[1]))
+        RR_deviation = np.zeros((L, Y.shape[1]))
+        OR = np.zeros((L, Y.shape[1]))
+        OR_deviation = np.zeros((L, Y.shape[1]))
         y_labels, counts = [], []
         
         for factor in range(L):                                                                                         
@@ -189,111 +327,120 @@ def process_factors(Y, z_binary):
             no_factor = np.where(np.array(z_binary[:, factor]) != 1)[0]
             assert len(have_factor) + len(no_factor) == Y.shape[0]
             
-            prevalence[factor, :] = np.sum(Y[have_factor, :], axis=0)                                                             # Prevalence: The number of times the condition appears in the cluster74
-            OR[factor, :] = (_eps + np.mean(Y[have_factor, :], axis=0)) / (_eps + np.mean(Y[no_factor, :], axis=0))
+            # Prevalence: The number of times the condition appears in the factor
+            prevalence[factor, :] = np.sum(Y[have_factor, :], axis=0)         
+            
+            a = np.sum(Y[have_factor, :], axis=0)                             # count with condition | in factor 
+            b = np.sum(1 - Y[have_factor, :], axis=0)                         # count without condition | in factor
+            c = np.sum(Y[no_factor, :], axis=0)                               # count with condition | not in factor
+            d = np.sum(1- Y[no_factor, :], axis=0)                            # count without condition | not in factor
+            
+            # Relative risks:  
+            if len(have_factor) > 0:
+                # If set of patients with latent factor is non-empty
+                RR[factor, :] = (a/(a+b))/(c/(c+d))
+                RR_deviation[factor, :] = np.sqrt( 1/a - 1/(a+b) + 1/c - 1/(c+d) )
+                assert np.all(np.isclose(RR[factor, :], np.mean(Y[have_factor, :], axis=0) / np.mean(Y[no_factor, :], axis=0)))
+            else:
+                RR[factor, :] = np.nan
+                RR_deviation[factor, :] = np.nan
+            
+            # Odds ratio
+            OR[factor, :] = (a*d)/(b*c)
+            OR_deviation[factor, :] = np.sqrt(1/a + 1/b + 1/c + 1/d)
+            
             y_labels.append(f'{factor + 1}')                                                                                             # Save plotting label for when we report the above metrics
             counts.append(len(have_factor))
 
-        return prevalence, OR, counts, y_labels
+        return prevalence, RR, RR_deviation, OR, OR_deviation, counts, y_labels
 
 
 
-def post_process(Y, output_dictionary, Y_test=None, ensemble_allocations=False, eps=1e-6, save_path=None):
+def post_process(diag_frame, output_dictionary, save_path=None):
     """
     After training our mmVAE model, process the output ready for plotting
     
     Note - patient identifiers are never inputted to this package, and so downstream analysis will need to cross reference any saved files against pre-saved identifiers.
     """
-    
-    predicted_labels = output_dictionary['cluster_allocations']
-    unique_profiles = output_dictionary['unique_profiles']    
-    counts = output_dictionary['counts']
-    n_clusters = len(np.unique(predicted_labels))
-    z_binary = output_dictionary['z_binary']
-    L = output_dictionary['z_mean'].shape[1]
+    Y = diag_frame.to_numpy()
         
     ###############################
     # ========= CLUSTERS ==========
     ###############################
-    # TODO: remove cutoff here, and cut off only in plotting - then we don't need to process twice
-    prevalence, OR, CFA, counts, y_labels = process_clusters(Y,
-                                                             output_dictionary['cluster_allocations'],
-                                                             output_dictionary['unique_profiles'],
-                                                             output_dictionary['counts'],
-                                                             )
+    prevalence, RR, RR_dev, OR, OR_dev, CFA, counts, y_labels = process_clusters(Y,
+                                                                                 output_dictionary['cluster_allocations'],
+                                                                                 output_dictionary['unique_profiles'],
+                                                                                 output_dictionary['counts'],
+                                                                                )
     output_dictionary['prevalence_clusters'] = prevalence
+    output_dictionary['RR_clusters'] = RR
+    output_dictionary['RR_deviation_clusters'] = RR_dev
     output_dictionary['OR_clusters'] = OR
+    output_dictionary['OR_deviation_clusters'] = OR_dev
     output_dictionary['cluster_factors'] = CFA
     output_dictionary['count_clusters'] = counts
     output_dictionary['cluster_labels'] = y_labels
-    clusters = len(counts)
                                                                  
         
     ###############################
     # ========== FACTORS ===========
     ###############################   
-    prevalence, OR, counts, y_labels = process_factors(Y, output_dictionary['z_binary'])
+    prevalence, RR, RR_dev, OR, OR_dev, counts, y_labels = process_factors(Y, output_dictionary['z_binary'])
     
     output_dictionary['prevalence_topics'] = prevalence
+    output_dictionary['RR_topics'] = RR
+    output_dictionary['RR_deviation_topics'] = RR_dev
     output_dictionary['OR_topics'] = OR
+    output_dictionary['OR_deviation_topics'] = OR_dev
     output_dictionary['count_topics'] = counts
     output_dictionary['topic_labels'] = y_labels
 
     
     ###############################
-    # === OUT OF DISTRIBUTION ====
-    ###############################   
-    if Y_test is not None:
-        # TODO: add OOD processing here, currently in the plotting file.
-        pass
-    
-    ###############################
     # =========== SAVE ============
     ###############################       
     if save_path is not None:
-        df = pd.DataFrame(output_dictionary['cluster_allocations'] + 1)
+        df = pd.DataFrame(output_dictionary['cluster_allocations'])
         df.columns = ["Cluster"]
-        df.index.name = "Patient index"
-        df.to_excel(save_path + "_cluster_allocations.xlsx")
+        df.index.name = "Sample index"
+        df.to_excel(save_path + "cluster_allocations.xlsx")
         
         df = pd.DataFrame(output_dictionary['unique_profiles'])
-        df.columns = [f'Latent Factor {i+1}' for i in range(L)]
+        df.columns = [f'Latent Factor {i+1}' for i in range(output_dictionary['unique_profiles'].shape[1])]
         df.index.name = "Cluster index"
-        df.to_excel(save_path + "_cluster_factor_association.xlsx")
-                                                                    # index=get_column_order(plot=False),
-            
-        df= pd.DataFrame(output_dictionary['OR_clusters'])
-        df.columns = get_column_order(plot=False)
-        df.index.name = "Cluster index"
-        df.to_excel(save_path + "_OR_clusters.xlsx")
-                                                                # index=[f"Cluster {i+1}" for i in range(clusters)],
-            
-        df = pd.DataFrame(output_dictionary['OR_topics'])
-        df.columns = get_column_order(plot=False)
-        df.index.name = "Factor index"
-        df.to_excel(save_path + "_OR_factors.xlsx")
-                                                              # index=[f"Factor {i+1}" for i in range(L)],
+        df.to_excel(save_path + "cluster_factor_association.xlsx")
+        
+        for key in ["RR_clusters", "RR_deviation_clusters", "OR_clusters", "OR_deviation_clusters"]:
+            df= pd.DataFrame(output_dictionary[key])
+            df.columns = diag_frame.columns
+            df.index.name = "Cluster index"
+            df.to_excel(save_path + f"{key}.xlsx")
+        
+        for key in ["RR_topics", "RR_deviation_topics", "OR_topics", "OR_deviation_topics"]:
+            df= pd.DataFrame(output_dictionary[key])
+            df.columns = diag_frame.columns
+            df.index.name = "Factor index"
+            df.to_excel(save_path + f"{key}.xlsx")
             
         df = pd.DataFrame(output_dictionary['prevalence_clusters'])
-        df.columns = get_column_order(plot=False)
+        df.columns = diag_frame.columns
         df.index.name = "Cluster index"
-        df.to_excel(save_path + "_prevalence_clusters.xlsx")
-        
+        df.to_excel(save_path + "prevalence_clusters.xlsx")
         
         df = pd.DataFrame(output_dictionary['prevalence_topics'])
-        df.columns = get_column_order(plot=False)
+        df.columns = diag_frame.columns
         df.index.name = "Factor index"
-        df.to_excel(save_path + "_prevalence_factors.xlsx")
+        df.to_excel(save_path + "prevalence_factors.xlsx")
         
         df = pd.DataFrame(output_dictionary['count_clusters'])
         df.columns = ["Patients in cluster"]
         df.index.name = "Cluster index"
-        df.to_excel(save_path + "_count_clusters.xlsx")
+        df.to_excel(save_path + "count_clusters.xlsx")
         
         df = pd.DataFrame(output_dictionary['count_topics'])
         df.columns = ["Patients in factor"]
         df.index.name = "Factor index"
-        df.to_excel(save_path + "_count_factors.xlsx")
+        df.to_excel(save_path + "count_factors.xlsx")
 
     
         
@@ -301,67 +448,17 @@ def post_process(Y, output_dictionary, Y_test=None, ensemble_allocations=False, 
 
 
 # extra date helper functions
-def get_acquired_order(date_frame):
-    """
-    Apply filter to date frame to extract the order in which diseases were acquired
-    """
-    def apply_order(row):
-        acquired_order = pd.to_datetime(row[['Date_' + d for d in get_column_order()]].dropna(), format='%d/%m/%Y').sort_values().index.tolist()
-        acquired_order = [d[5:] for d in acquired_order]
-        return acquired_order
-    
-    acquired_order = date_frame.apply(apply_order, axis=1).tolist()
-    date_frame['acquired_order']  = acquired_order 
-    date_frame['first_acquired']  = [d_s[0] for d_s in acquired_order]
-
-    return date_frame
-
-
-# def post_process_dates(Y, output_dictionary, truncate_or = 5, eps=1e-6, dates = False):
+# def get_acquired_order(date_frame):
 #     """
-#     After training our mmVAE model, interrogate the clustering results in a temporal analysis
+#     Apply filter to date frame to extract the order in which diseases were acquired
 #     """
-
-#     predicted_labels = output_dictionary['cluster_allocations']
-#     counts = output_dictionary['counts']
-#     n_clusters = len(np.unique(predicted_labels))
-
-#     if n_clusters < 30:                     # If there are less than X clusters we  calculate the odds ratio and prevalence of them all
-#         cutoff = -1 
-#     else:                                   # Else we only calculate OR and prevalence of those above a cutoff size
-#         cutoff = 1000
-#     n_clusters_over = sum(counts > cutoff)
-
-#     # Memory-alloc
-#     disease_order = np.zeros((Y.shape[0], len(get_column_order())))
+#     def apply_order(row):
+#         acquired_order = pd.to_datetime(row[['Date_' + d for d in get_column_order()]].dropna(), format='%d/%m/%Y').sort_values().index.tolist()
+#         acquired_order = [d[5:] for d in acquired_order]
+#         return acquired_order
     
-#     # For each sample
-#     for idx_sample in range(Y.shape[0]):
-#         pass
-        
-    
-#     #OR = np.zeros((n_clusters_over, len(get_column_order())))
-#     cluster_axislabel = []
+#     acquired_order = date_frame.apply(apply_order, axis=1).tolist()
+#     date_frame['acquired_order']  = acquired_order 
+#     date_frame['first_acquired']  = [d_s[0] for d_s in acquired_order]
 
-#     # For each cluster above cut-off size
-#     for idx, cluster in enumerate([i for i in range(len(counts)) if counts[i] > cutoff]):
-#         # Prevalence: The number of times the condition appears in the cluster
-#         first_disease_label[idx] = np.sum(Y[predicted_labels == cluster + 1, :], axis=0)
-#         # Odds ratio: The nyumber of times it appears, divided by the number of times it appears elsewhere (with eps for stability)
-#         #OR[idx, :] = np.mean(Y[predicted_labels == cluster + 1, :], axis=0) / (eps + np.mean(Y[predicted_labels != cluster + 1, :], axis=0))
-        
-#         # Save plotting label for when we report the above metrics
-#         cluster_axislabel.append(f'{cluster}, n={counts[cluster]}')#, {np.where(unique_profiles[cluster, :]!=0)}')
-
-#     # Truncate odds ratio for visualisation (in the case of extreme values in smaller clusters / rare conditions).
-#     if truncate_or is not False:
-#         OR[OR > truncate_or] = truncate_or
-    
-#     output_dictionary['prevalence'] = prevalence
-#     output_dictionary['OR'] = OR
-#     output_dictionary['cluster_axislabel'] = cluster_axislabel
-    
-#     return output_dictionary
-
-
-    
+#     return date_frame
