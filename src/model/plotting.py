@@ -62,11 +62,103 @@ def relative_risk(*args, **kwargs):
     warn('relative_risk()  is deprecated. Use plot_grid()', DeprecationWarning, stacklevel=2)
     return plot_grid(*args, **kwargs)
 
-    
+
 def plot_grid(grid, cluster_names, condition_names,
               counts, perc_threshold=None,
               figsize=[2, 1], save_path=None,
-              xlabel=None, ylabel=None, cbar_label=None, bins=None, bin_names=None):
+              xlabel=None, ylabel=None, cbar_label=None, 
+              bins=None, bin_names=None, bin_suffix=""):
+
+    
+    percentage_prevalence = [(100 * i)  / np.sum(counts) for i in counts] # counts / np.sum()
+    if perc_threshold is not None:
+        mask = [i > perc_threshold for i in percentage_prevalence]
+        grid = grid[mask, :]
+        cluster_names = cluster_names[:grid.shape[0]]
+
+    # Create fig
+    sns.set()
+    sns.set_style(style='white')
+    fig, axes = plt.subplots(2, 2, sharey=False, figsize=(figsize[0]*11.7, figsize[1]*8.27), 
+                             gridspec_kw={'width_ratios': [4, 0.65], 'height_ratios': [0.15, 4], "wspace": .025, "hspace": .05})
+    ax1 = axes[1, 0]
+    ax2 = axes[1, 1]
+    ax3 = axes[0, 0]
+    axes[0, 1].set_axis_off()
+    
+    # Define the intervals over which we digitize the data
+    if bins == None:
+        if np.max(grid) > 10**3:
+            increments = 10**np.floor(np.log10(np.max(grid))) 
+            bins = [int(increments * i) for i in range(1, np.int(np.ceil(np.max(grid) / increments)))]
+        else:
+            bins = [1, 2, 4, 6]
+            
+    if bin_names == None:
+        if np.max(bins) > 10**3:
+            bin_names = [f"<{bins[0]:,.0f}"] + [f"{bins[i]:,.0f}-{bins[i+1]:,.0f}" for i in range(len(bins)-1)] + [f"{bins[-1]:,.0f}+"]
+        else:
+            bin_names = [f"<{bins[0]}{bin_suffix}"] + [f"{bins[i]}-{bins[i+1]}{bin_suffix}" for i in range(len(bins)-1)] + [f"{bins[-1]}{bin_suffix}+"]
+
+    # Digitize
+    grid = np.digitize(grid, bins)
+        
+    # Plot
+    cmap = sns.cubehelix_palette(n_colors=len(bins)+1,start=2.5, rot=0, gamma=0.6, light=0.95, dark=0.4)
+    cbar_kws={"orientation": "horizontal",
+              "ticks": [i + 0.5 for i in range(len(bins)+1)], 
+              "boundaries": [i for i in range(len(bins)+2)], 
+              "shrink": .85,
+              # "drawedges": True,
+             }  
+    hm = sns.heatmap(grid+0.5, cbar_kws=cbar_kws, cmap=cmap, cbar_ax=ax3, ax=ax1, linewidths=20/grid.shape[0])
+
+    # Labels
+    ax1.set_xticklabels(condition_names, rotation=90)    
+    ax1.set_yticklabels(cluster_names, rotation=0)
+    ax1.set_xlabel(xlabel, fontsize=18)
+    ax1.set_ylabel(ylabel, fontsize=18)
+
+    # Draw boxes
+    # Drawing the frame
+    for _, spine in hm.spines.items():
+        spine.set_visible(True)
+        spine.set_linewidth(1)
+    # Border around cbar doesn't seem to work
+    # for _, spine in ax3.spines.items():
+    #     spine.set(visible=True, lw=8, edgecolor="black")
+    
+    # fix for mpl bug that cuts off top/bottom of seaborn viz
+    b, t = ax1.get_ylim()          # discover the values for bottom and top
+    ax1.set_ylim(b+0.5, t-0.5)     # update the ylim(bottom, top) values. Add 0.5 to the bottom. Subtract 0.5 from the top
+    
+    # Histogram plot
+    sns.distplot(range(grid.shape[0]), grid.shape[0], 
+                 hist_kws={'weights': np.flip(counts[:grid.shape[0]])},
+                 kde=False, vertical=True, ax=ax2)
+    ax2.set_xlabel(f'Number of patients \n in {ylabel.lower()}' if ylabel is not None else 'Number of patients', fontsize=18)
+    ax2.set_yticklabels([])
+    ax2.set_yticks([i for i in range(grid.shape[0])])
+    ax2.set_ylim((0, grid.shape[0]-1))
+    
+
+    ax1.tick_params(axis='x', labelsize=16)
+    ax1.tick_params(axis='y', labelsize=14)
+    ax2.tick_params(axis='x', labelsize=16)
+    ax3.tick_params(axis="x",direction="in", pad=0.5, labelsize=14)
+    ax3.set_xticklabels(bin_names)  # vertically oriented colorbar
+    ax3.xaxis.set_label_position('top')
+    ax3.xaxis.set_ticks_position('top')
+    ax3.set_xlabel("" if cbar_label is None else cbar_label, fontsize=18)
+        
+    if save_path is not None:
+        plt.savefig(save_path + '.png', dpi=600, bbox_inches='tight', format='png')
+    plt.show()
+    
+def plot_grid2(grid, cluster_names, condition_names,
+              counts, perc_threshold=None,
+              figsize=[2, 1], save_path=None,
+              xlabel=None, ylabel=None, cbar_label=None, bins=None, bin_names=None, percentage=False):
 
     
     percentage_prevalence = [(100 * i)  / np.sum(counts) for i in counts] # counts / np.sum()
